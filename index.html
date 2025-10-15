@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<link rel="manifest" href="manifest.json">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puustolaskuri</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+        h2 {
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            margin-top: 15px;
+            padding: 10px;
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Puustolaskuri</h2>
+        <label>Kuvion pinta-ala (ha):</label>
+        <input type="number" id="area" value="1">
+
+        <h3>Mänty</h3>
+        <label>Pohjapinta-ala (m²/ha):</label>
+        <input type="number" id="ppa_manty">
+        <label>Pituus (m):</label>
+        <input type="number" id="pituus_manty">
+        <label>Läpimitta (cm):</label>
+        <input type="number" id="lapi_manty">
+        <label>Poistoprosentti (%):</label>
+        <input type="number" id="poisto_manty">
+        <label>Tukkiprosentti (%):</label>
+        <input type="number" id="tukki_manty">
+
+        <h3>Kuusi</h3>
+        <label>Pohjapinta-ala (m²/ha):</label>
+        <input type="number" id="ppa_kuusi">
+        <label>Pituus (m):</label>
+        <input type="number" id="pituus_kuusi">
+        <label>Läpimitta (cm):</label>
+        <input type="number" id="lapi_kuusi">
+        <label>Poistoprosentti (%):</label>
+        <input type="number" id="poisto_kuusi">
+        <label>Tukkiprosentti (%):</label>
+        <input type="number" id="tukki_kuusi">
+
+        <h3>Koivu</h3>
+        <label>Pohjapinta-ala (m²/ha):</label>
+        <input type="number" id="ppa_koivu">
+        <label>Pituus (m):</label>
+        <input type="number" id="pituus_koivu">
+        <label>Läpimitta (cm):</label>
+        <input type="number" id="lapi_koivu">
+        <label>Poistoprosentti (%):</label>
+        <input type="number" id="poisto_koivu">
+        <label>Tukkiprosentti (%):</label>
+        <input type="number" id="tukki_koivu">
+
+        <button onclick="laske()">Laske</button>
+
+        <div id="tulokset"></div>
+    </div>
+
+    <script>
+        function laske() {
+            const area = parseFloat(document.getElementById('area').value);
+
+            const puulajit = ['manty', 'kuusi', 'koivu'];
+            let yhteensa_ha = 0, yhteensa_kuvio = 0;
+            let yhteensa_tukki_ha = 0, yhteensa_tukki_kuvio = 0;
+            let yhteensa_kuitu_ha = 0, yhteensa_kuitu_kuvio = 0;
+
+            let html = '<table><tr><th>Puulaji</th><th>m³/ha</th><th>m³/kuvio</th><th>Tukkipuu</th><th>Kuitupuu</th></tr>';
+
+            puulajit.forEach(puulaji => {
+                const ppa = parseFloat(document.getElementById('ppa_' + puulaji).value) || 0;
+                const pituus = parseFloat(document.getElementById('pituus_' + puulaji).value) || 0;
+                const lapi = parseFloat(document.getElementById('lapi_' + puulaji).value) || 0;
+                const poisto = parseFloat(document.getElementById('poisto_' + puulaji).value) || 0;
+                const tukki = parseFloat(document.getElementById('tukki_' + puulaji).value) || 0;
+
+                const nykypuusto_ha = ppa * pituus * (0.00007854 * lapi * lapi);
+                const poistettava_ha = nykypuusto_ha * (poisto / 100);
+                const tukki_ha = poistettava_ha * (tukki / 100);
+                const kuitu_ha = poistettava_ha - tukki_ha;
+
+                const nykypuusto_kuvio = nykypuusto_ha * area;
+                const poistettava_kuvio = poistettava_ha * area;
+                const tukki_kuvio = tukki_ha * area;
+                const kuitu_kuvio = kuitu_ha * area;
+
+                yhteensa_ha += poistettava_ha;
+                yhteensa_kuvio += poistettava_kuvio;
+                yhteensa_tukki_ha += tukki_ha;
+                yhteensa_tukki_kuvio += tukki_kuvio;
+                yhteensa_kuitu_ha += kuitu_ha;
+                yhteensa_kuitu_kuvio += kuitu_kuvio;
+
+                html += `<tr><td>${puulaji.charAt(0).toUpperCase() + puulaji.slice(1)}</td>
+                         <td>${Math.round(poistettava_ha)}</td>
+                         <td>${Math.round(poistettava_kuvio)}</td>
+                         <td>${Math.round(tukki_kuvio)}</td>
+                         <td>${Math.round(kuitu_kuvio)}</td></tr>`;
+            });
+
+            html += `<tr><th>Yhteensä</th>
+                     <th>${Math.round(yhteensa_ha)}</th>
+                     <th>${Math.round(yhteensa_kuvio)}</th>
+                     <th>${Math.round(yhteensa_tukki_kuvio)}</th>
+                     <th>${Math.round(yhteensa_kuitu_kuvio)}</th></tr></table>`;
+
+            document.getElementById('tulokset').innerHTML = html;
+        }
+    </script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('service-worker.js');
+  });
+}
+</script>
+
+</body>
+</html>
